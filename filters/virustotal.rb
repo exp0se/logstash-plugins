@@ -60,7 +60,11 @@ class LogStash::Filters::Virustotal < LogStash::Filters::Base
 	md5 = event["fileinfo[md5]"]
 	return @logger.debug("md5 hash is empty") if md5.nil? || md5.empty?
 	check_hash = RestClient.get "#{url}", :params => { :apikey => @apikey, :resource => "#{md5}" }
-	results = JSON.parse(check_hash)
+	begin
+		results = JSON.parse(check_hash)
+	rescue
+		return @logger.debug("skipping json parsing exception")
+	end
 	# Add a new field virustotal with results
 	# This is tied to Suricata EVE JSON scheme
         event["fileinfo[virustotal]"] = results unless results.empty? || results.nil? || results["response_code"] == 0 || results["response_code"] == -1
